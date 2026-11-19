@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Mandarin Chinese Studio — Audio & AI Flashcards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        chinese: ['"Noto Sans SC"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        // Apply saved or system dark mode preference immediately before paint
+        (function() {
+            try {
+                const savedTheme = localStorage.getItem('mandarin_studio_theme');
+                if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <style>
+        /* Custom animations for audio playback pulse & card flip */
+        @keyframes soundWave {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.12); }
+        }
+        .speaking-pulse {
+            animation: soundWave 0.9s infinite ease-in-out;
+        }
+        /* Hide scrollbar for clean horizontal batch tabs */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .flashcard-perspective {
+            perspective: 1200px;
+        }
+        .flashcard-inner {
+            transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+            transform-style: preserve-3d;
+        }
+        .flashcard-flipped {
+            transform: rotateY(180deg);
+        }
+        .flashcard-face {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .flashcard-back {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col selection:bg-rose-100 selection:text-rose-900 dark:selection:bg-rose-900/50 dark:selection:text-rose-100 transition-colors duration-200">
+
+    <!-- Top Navigation & Audio Studio Bar -->
+    <header class="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                <!-- Brand Title -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-600 to-amber-600 text-white flex items-center justify-center font-chinese font-bold text-xl shadow-sm">
+                            词
+                        </div>
+                        <div>
+                            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                                <span>汉语词汇工作室</span>
+                                <span class="hidden sm:inline-block text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/70">HSK 1–8</span>
+                            </h1>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Interactive Mandarin Audio &amp; AI Expansion Deck</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 lg:hidden">
+                        <!-- Mobile Total Counter -->
+                        <span id="mobileWordCount" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                            30 Words
+                        </span>
+                        <!-- Mobile Dark Mode Toggle -->
+                        <button type="button" onclick="toggleDarkMode()" aria-label="Toggle Dark Mode" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-amber-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                            <svg class="w-4 h-4 hidden dark:block" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                            </svg>
+                            <svg class="w-4 h-4 block dark:hidden" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Audio Controls Toolbar -->
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <!-- Voice Selector -->
+                    <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 flex-1 sm:flex-initial min-w-[160px]">
+                        <svg class="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                        </svg>
+                        <select id="voiceSelect" aria-label="Select Mandarin Voice" class="bg-transparent text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none w-full truncate">
+                            <option value="" class="dark:bg-slate-800">Loading Mandarin Voices...</option>
+                        </select>
+                    </div>
+
+                    <!-- Speed Toggle -->
+                    <div class="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700" role="group" aria-label="Speech Rate">
+                        <button type="button" id="speedSlowBtn" onclick="setSpeechRate(0.7)" class="px-2.5 py-1 text-xs font-semibold rounded-lg transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                            0.7x Slow
+                        </button>
+                        <button type="button" id="speedNormalBtn" onclick="setSpeechRate(1.0)" class="px-2.5 py-1 text-xs font-semibold rounded-lg transition bg-white dark:bg-slate-700 text-rose-700 dark:text-rose-300 shadow-sm">
+                            1.0x Normal
+                        </button>
+                    </div>
+
+                    <!-- Play All / Stop Auto-Study Button -->
+                    <button type="button" id="playAllBtn" onclick="togglePlayAll()" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 dark:bg-rose-600 text-white hover:bg-slate-800 dark:hover:bg-rose-500 active:scale-[0.99] transition shadow-sm">
+                        <svg id="playAllIcon" class="w-4 h-4 text-rose-400 dark:text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+                        </svg>
+                        <span id="playAllText">Play All in View</span>
+                    </button>
+
+                    <!-- Desktop Dark Mode Toggle -->
+                    <button type="button" onclick="toggleDarkMode()" aria-label="Toggle Dark Mode" title="Toggle Dark Mode" class="hidden lg:inline-flex items-center justify-center p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-amber-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                        <svg class="w-4 h-4 hidden dark:block" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                        </svg>
+                        <svg class="w-4 h-4 block dark:hidden" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Status / Toast Banner (Replaces alert) -->
+        <div id="statusBanner" class="hidden rounded-2xl px-4 py-3 text-sm font-medium flex items-center justify-between gap-3 shadow-sm border transition-all">
+            <div class="flex items-center gap-2.5">
+                <span id="statusIcon"></span>
+                <span id="statusMessage"></span>
+            </div>
+            <button type="button" onclick="hideStatus()" class="text-xs opacity-70 hover:opacity-100 px-2 py-1 rounded-lg">Dismiss</button>
+        </div>
+
+        <!-- AI Generator Card: +10 New Words by HSK Level or Theme -->
+        <section class="bg-gradient-to-r from-rose-600 via-rose-700 to-amber-700 dark:from-rose-900 dark:via-rose-950 dark:to-amber-950 rounded-2xl p-5 sm:p-6 text-white shadow-md border border-transparent dark:border-rose-800/50">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div class="space-y-1 max-w-2xl">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-xs font-semibold tracking-wide">
+                            <span>✨ Gemini AI Vocabulary Expansion · HSK 3 to HSK 8</span>
+                        </span>
+                        <span id="savedStorageBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/25 border border-emerald-300/30 text-emerald-100 text-[11px] font-semibold">
+                            <span id="savedStorageDot" class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                            <span id="savedStorageText">Connecting Cloud Sync...</span>
+                        </span>
+                    </div>
+                    <h2 class="text-lg sm:text-xl font-bold tracking-tight">Ready for 10 more Mandarin words?</h2>
+                    <p class="text-xs sm:text-sm text-rose-100">
+                        Choose your target proficiency (<span class="font-semibold text-white">HSK 1 through HSK 8</span>) or a specialized theme to generate 10 brand-new words—automatically synced to the cloud across your <span id="heroWordCount" class="font-bold underline">30</span> words.
+                    </p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+                    <!-- HSK Level & Theme Dropdown -->
+                    <div class="relative">
+                        <label for="topicSelect" class="sr-only">HSK Level or Vocabulary Theme</label>
+                        <select id="topicSelect" class="w-full sm:w-64 px-3.5 py-2.5 rounded-xl bg-white/15 hover:bg-white/20 text-white text-sm font-medium border border-white/25 focus:outline-none focus:ring-2 focus:ring-white/50 backdrop-blur-sm">
+                            <optgroup label="HSK Proficiency Levels (HSK 3.0)" class="text-slate-900 dark:text-slate-100 dark:bg-slate-900 font-semibold">
+                                <option value="HSK 1 (Beginner Essentials)" class="text-slate-900 dark:text-slate-100 dark:bg-slate-900">HSK 1 — Beginner Essentials</option>
+                                <option value="HSK 2 (Elementary Everyday)" class="text-slate-900 dark:text-slate-100 dark:bg-slate-900">HSK 2 — Elementary Everyday</option>
+                                <option value="HSK 3 (Intermediate Foundations)" class="text-slate-900 dark:text-slate-100 dark:bg-slate-900">HSK 3 — Intermediate Foundations</option>
+                                <option value="HSK 4 (Upper-Intermediate Fluency)" class="text-slate-900 dark:text-slate-100 dark:bg-slate-900">HSK 4 — Upper-Intermediate Fluency</option>
+                                <option value="HSK 5–6 (Advanced General)" selected class="text-slate-900 dark:text-slate-100 dark:bg-slate-900">HSK 5–6 — Advanced General</option>
+                                <option value="HSK 7 (Superior Academic & Abstract)" class="text-slate-900 dark:text-slate-100 dark:bg-slate-900">HSK 7 — Superior Academic &amp; Abstract</option>
+                                <option value="HSK 8 (Mastery Rhetoric & Classical)" class="text-slate-900 dark:text-slate-100 dark:bg-slate-900">HSK 8 — Mastery Rhetoric &amp; Classical</option>
+                            </optgroup>
+                            <optgroup label="Specialized Themes" class="text-slate-900 dark:text-slate-100 dark:bg-slate-900 font-semibold">
+                                <option value="Business, Economics & Strategy" class="text-slate-900 dark:text-slate-100 dark:bg-slate-900">Business &amp; Economics</option>
+                                <option value="Literary & Formal Written (书面语)" class="text-slate-900 dark:text-slate-100 dark:bg-slate-900">Literary &amp; Formal Written (书面语)</option>
+                                <option value="Four-Character Idioms (Chengyu 成语)" class="text-slate-900 dark:text-slate-100 dark:bg-slate-900">Idioms / Chengyu (成语)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <!-- Generate +10 Button -->
+                    <button type="button" id="generateBtn" onclick="generateNewBatch()" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white dark:bg-amber-400 text-rose-700 dark:text-slate-950 hover:bg-rose-50 dark:hover:bg-amber-300 active:scale-[0.99] font-bold text-sm shadow-md transition disabled:opacity-60 disabled:cursor-not-allowed">
+                        <svg id="generateSpinner" class="hidden animate-spin w-4 h-4 text-rose-600 dark:text-slate-950" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span id="generateBtnLabel">+10 New Words</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filter, Search, Self-Test Toggles & View Mode Controls -->
+        <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm space-y-4 transition-colors">
+            <!-- Batch & Favorites Tabs Row -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div id="batchTabsContainer" class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+                    <!-- Dynamically rendered batch & Favorites tabs -->
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+                    <input type="file" id="importFileInput" accept=".json,application/json" class="hidden" onchange="handleImportBackupFile(event)">
+                    <button type="button" onclick="triggerImportBackup()" class="text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Restore saved batches and favorites from a JSON backup file">
+                        Import Backup
+                    </button>
+                    <button type="button" onclick="exportVocabularyBackup()" class="text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Download JSON backup of all saved batches and favorites">
+                        Export Backup
+                    </button>
+                    <button type="button" id="resetBatchesBtn" onclick="confirmResetCustomBatches()" class="hidden text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 transition" title="Remove AI-generated batches and keep original 30 words">
+                        Reset AI Batches
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dedicated Favorites Page Header Banner (Shown only when Favorites tab is active) -->
+            <div id="favoritesPageHeader" class="hidden rounded-xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-start sm:items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-400/20 dark:bg-amber-500/20 text-amber-600 dark:text-amber-300 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm sm:text-base font-bold text-amber-950 dark:text-amber-100 flex items-center gap-2">
+                            <span>Saved Favorites Collection</span>
+                            <span id="favoritesPageCountBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-200/80 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200">0 words</span>
+                        </h3>
+                        <p class="text-xs text-amber-800/90 dark:text-amber-300/80 mt-0.5">
+                            Your personal review list across all batches. Practice in Study Cards or Flashcard Mode, or listen sequentially.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 self-end sm:self-center">
+                    <button type="button" id="playFavoritesBtn" onclick="togglePlayAll()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-xs transition">
+                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+                        </svg>
+                        <span>Play All Favorites</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search + Study Toggles Row -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <!-- Search Input -->
+                <div class="relative flex-1 max-w-md">
+                    <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Search characters, pinyin, HSK level, or meaning..." class="w-full pl-10 pr-8 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition">
+                    <button type="button" id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+                        ✕
+                    </button>
+                </div>
+
+                <!-- Right Side Controls: Self-Test Toggles & View Mode -->
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <!-- Show/Hide Pinyin -->
+                    <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-750 transition">
+                        <input type="checkbox" id="togglePinyin" checked onchange="toggleVisibilitySetting('showPinyin', this.checked)" class="rounded text-rose-600 focus:ring-rose-500 dark:bg-slate-700 dark:border-slate-600">
+                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Pinyin</span>
+                    </label>
+
+                    <!-- Show/Hide English -->
+                    <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-750 transition">
+                        <input type="checkbox" id="toggleEnglish" checked onchange="toggleVisibilitySetting('showEnglish', this.checked)" class="rounded text-rose-600 focus:ring-rose-500 dark:bg-slate-700 dark:border-slate-600">
+                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">English</span>
+                    </label>
+
+                    <!-- View Mode Switcher (Study List vs Flashcard Deck) -->
+                    <div class="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700">
+                        <button type="button" id="viewGridBtn" onclick="setViewMode('grid')" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                            </svg>
+                            Study Cards
+                        </button>
+                        <button type="button" id="viewFlashcardBtn" onclick="setViewMode('flashcard')" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                            Flashcard Mode
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic Grid View Container -->
+        <section id="gridViewContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Rendered dynamically -->
+        </section>
+
+        <!-- Flashcard Mode View Container -->
+        <section id="flashcardViewContainer" class="hidden max-w-2xl mx-auto w-full py-4">
+            <div class="space-y-4">
+                <!-- Flashcard Header Meta -->
+                <div class="flex items-center justify-between px-2">
+                    <span id="flashcardCounter" class="text-xs font-bold px-3 py-1 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                        Card 1 of 30
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <span id="flashcardBatchBadge" class="text-xs font-semibold px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300">
+                            Batch 1
+                        </span>
+                        <button type="button" id="fcFrontFavBtn" onclick="toggleCurrentFlashcardFavorite()" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:text-amber-500 transition">
+                            <span>★</span>
+                            <span id="fcFrontFavLabel">Favorite</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3D Flippable Card -->
+                <div class="flashcard-perspective w-full h-[420px] cursor-pointer" onclick="flipFlashcard()">
+                    <div id="flashcardInner" class="flashcard-inner relative w-full h-full rounded-2xl shadow-md">
+                        
+                        <!-- FRONT FACE -->
+                        <div class="flashcard-face absolute inset-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 flex flex-col justify-between items-center text-center select-none shadow-sm">
+                            <div class="w-full flex justify-between items-center text-xs text-slate-400 dark:text-slate-500 font-medium">
+                                <span>Click anywhere to flip</span>
+                                <span>Front</span>
+                            </div>
+
+                            <div class="space-y-4 my-auto">
+                                <h2 id="fcChinese" class="font-chinese text-6xl sm:text-7xl font-bold text-slate-900 dark:text-white tracking-wide">
+                                    词汇
+                                </h2>
+                                <p id="fcPinyinFront" class="text-xl font-semibold text-rose-600 dark:text-rose-400">
+                                    cí huì
+                                </p>
+                            </div>
+
+                            <div class="w-full flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <button type="button" id="fcFrontAudioBtn" onclick="event.stopPropagation(); speakCurrentFlashcardWord()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 text-xs font-semibold hover:bg-rose-100 transition">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414z"/>
+                                    </svg>
+                                    <span>Pronounce Word</span>
+                                </button>
+                                <span class="text-xs text-slate-400">Spacebar to Flip ➔</span>
+                            </div>
+                        </div>
+
+                        <!-- BACK FACE -->
+                        <div class="flashcard-face flashcard-back absolute inset-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-8 flex flex-col justify-between text-left select-none shadow-sm">
+                            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                                <div class="flex items-baseline gap-2.5">
+                                    <h3 id="fcBackChinese" class="font-chinese text-2xl font-bold text-slate-900 dark:text-white">词</h3>
+                                    <span id="fcBackPinyin" class="text-sm font-semibold text-rose-600 dark:text-rose-400">cí</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" id="fcBackFavBtn" onclick="event.stopPropagation(); toggleCurrentFlashcardFavorite()" class="p-2.5 rounded-xl border bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-amber-500 transition">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                        </svg>
+                                    </button>
+                                    <span class="text-xs text-slate-400">Backside</span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3 my-auto">
+                                <p id="fcBackMeaning" class="text-base font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
+                                    Definition goes here...
+                                </p>
+                                <div class="bg-slate-50 dark:bg-slate-800/70 rounded-xl p-3.5 border border-slate-200/70 dark:border-slate-700/70 space-y-1">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <p id="fcSentenceCn" class="font-chinese text-sm sm:text-base font-medium text-slate-900 dark:text-slate-100">
+                                            Sentence here...
+                                        </p>
+                                        <button type="button" id="fcSentenceAudioBtn" onclick="event.stopPropagation(); speakCurrentFlashcardSentence()" class="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 text-xs font-semibold">
+                                            <span>Sentence</span>
+                                        </button>
+                                    </div>
+                                    <p id="fcSentencePy" class="text-xs text-rose-700 dark:text-rose-400 font-medium">Pinyin...</p>
+                                    <p id="fcSentenceEn" class="text-xs text-slate-600 dark:text-slate-400 italic">"English..."</p>
+                                </div>
+                            </div>
+
+                            <div class="text-center text-xs text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                Click card to flip back to front
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Flashcard Navigation Controls -->
+                <div class="flex items-center justify-between gap-3 pt-2">
+                    <button type="button" onclick="prevFlashcard()" class="flex-1 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs transition">
+                        ← Previous (Left Arrow)
+                    </button>
+                    <button type="button" onclick="shuffleFlashcards()" class="px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Random Card">
+                        Shuffle
+                    </button>
+                    <button type="button" onclick="nextFlashcard()" class="flex-1 py-3 rounded-xl bg-slate-900 dark:bg-rose-600 text-white text-xs font-bold hover:bg-slate-800 dark:hover:bg-rose-500 shadow-xs transition">
+                        Next → (Right Arrow)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Empty State (Hidden by default) -->
+        <div id="emptyState" class="hidden text-center py-16 px-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
+            <div class="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto text-xl font-bold">
+                ?
+            </div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">No vocabulary words found</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                No words match your search query in this batch or favorites list. Try clearing your search or generating a new batch.
+            </p>
+            <button type="button" onclick="clearSearch()" class="px-4 py-2 rounded-xl bg-slate-900 dark:bg-rose-600 text-white text-xs font-semibold shadow-xs">
+                Clear Search
+            </button>
+        </div>
+    </main>
+
+    <!-- Footer Reset Confirmation Modal -->
+    <div id="resetModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Reset Custom AI Batches?</h3>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                This will remove all AI-generated batches (Batch 4 and above) and restore the original 30 core advanced words. Your saved <span class="font-semibold text-amber-500">Favorites</span> will remain untouched.
+            </p>
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onclick="closeResetModal()" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">
+                    Cancel
+                </button>
+                <button type="button" onclick="executeResetCustomBatches()" class="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-semibold hover:bg-rose-500 transition shadow-xs">
+                    Yes, Reset Batches
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        // =========================================================================
+        // CLOUD STORAGE (FIREBASE FIRESTORE) & REAL-TIME SYNC SETUP
+        // =========================================================================
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        let cloudConnected = false;
+
+        async function initCloudStorage() {
+            try {
+                if (typeof __firebase_config === 'undefined' || !__firebase_config) {
+                    updateCloudStatusUI(false, 'Offline Session Mode');
+                    return;
+                }
+
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    const cred = await signInWithCustomToken(auth, __initial_auth_token);
+                    currentUser = cred.user;
+                } else {
+                    const cred = await signInAnonymously(auth);
+                    currentUser = cred.user;
+                }
+
+                if (!currentUser) {
+                    updateCloudStatusUI(false, 'Offline Session Mode');
+                    return;
+                }
+
+                cloudConnected = true;
+                updateCloudStatusUI(true);
+                subscribeToCloudData();
+            } catch (err) {
+                console.warn('Cloud sync initialization fallback:', err);
+                cloudConnected = false;
+                updateCloudStatusUI(false, 'Offline Session Mode');
+            }
+        }
+
+        function updateCloudStatusUI(isConnected, customLabel = null) {
+            const dot = document.getElementById('savedStorageDot');
+            const badgeText = document.getElementById('savedStorageText');
+            const total = window.state ? window.state.vocabulary.length : 30;
+
+            if (dot) {
+                dot.classList.remove('animate-pulse', 'bg-emerald-300', 'bg-amber-300');
+                dot.classList.add(isConnected ? 'bg-emerald-300' : 'bg-amber-300');
+            }
+            if (badgeText) {
+                badgeText.textContent = customLabel
+                    ? `${customLabel} (${total} words)`
+                    : `Cloud Synced (${total} words)`;
+            }
+        }
+
+        function subscribeToCloudData() {
+            if (!db || !currentUser) return;
+            const userId = currentUser.uid;
+
+            // 1. Subscribe to Cloud Custom Batches
+            const batchesCol = collection(db, 'artifacts', appId, 'users', userId, 'custom_batches');
+            onSnapshot(batchesCol, (snapshot) => {
+                const cloudWords = [];
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    if (data && Array.isArray(data.words)) {
+                        cloudWords.push(...data.words);
+                    }
+                });
+
+                if (window.applyCloudBatches) {
+                    window.applyCloudBatches(cloudWords);
+                }
+            }, (error) => {
+                console.warn('Cloud batches listener error:', error);
+            });
+
+            // 2. Subscribe to Cloud Favorites
+            const favsCol = collection(db, 'artifacts', appId, 'users', userId, 'favorites');
+            onSnapshot(favsCol, (snapshot) => {
+                const cloudFavs = [];
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    if (data && data.word) {
+                        cloudFavs.push(data);
+                    }
+                });
+
+                if (window.applyCloudFavorites) {
+                    window.applyCloudFavorites(cloudFavs);
+                }
+            }, (error) => {
+                console.warn('Cloud favorites listener error:', error);
+            });
+        }
+
+        window.cloudSaveBatch = async function(batchNumber, wordsArray) {
+            if (!db || !currentUser) return false;
+            try {
+                const batchDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'custom_batches', `batch_${batchNumber}`);
+                await setDoc(batchDocRef, {
+                    batch: batchNumber,
+                    updatedAt: Date.now(),
+                    words: wordsArray
+                });
+                return true;
+            } catch (err) {
+                console.warn('Cloud batch save error:', err);
+                return false;
+            }
+        };
+
+        window.cloudClearCustomBatches = async function(batchNumbers) {
+            if (!db || !currentUser) return;
+            try {
+                for (const bNum of batchNumbers) {
+                    const batchDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'custom_batches', `batch_${bNum}`);
+                    await deleteDoc(batchDocRef);
+                }
+            } catch (err) {
+                console.warn('Cloud batch clear error:', err);
+            }
+        };
+
+        window.cloudSetFavorite = async function(item, isAdding) {
+            if (!db || !currentUser || !item || !item.word) return false;
+            try {
+                const safeDocId = encodeURIComponent(item.word);
+                const favDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'favorites', safeDocId);
+                if (isAdding) {
+                    await setDoc(favDocRef, {
+                        ...item,
+                        savedAt: Date.now()
+                    });
+                } else {
+                    await deleteDoc(favDocRef);
+                }
+                return true;
+            } catch (err) {
+                console.warn('Cloud favorite sync error:', err);
+                return false;
+            }
+        };
+
+        window.isCloudConnected = () => cloudConnected;
+        window.refreshCloudBadge = () => updateCloudStatusUI(cloudConnected, cloudConnected ? null : 'Offline Session Mode');
+
+        // Start Cloud Storage initialization immediately
+        initCloudStorage();
+    </script>
+
+    <script>
+        // =========================================================================
+        // 0. INITIAL 30 ADVANCED MANDARIN WORDS (BATCHES 1, 2, & 3)
+        // =========================================================================
+        const INITIAL_VOCABULARY = [
+            // Batch 1
+            { id: 'b1-1', batch: 1, batchLabel: 'Batch 1', theme: 'Advanced General', word: '斟酌', pinyin: 'zhēn zhuó', meaning: 'To consider carefully; to deliberate or weigh the pros and cons of something.', sentence: '这个问题还需要再仔细斟酌一下，不能草率决定。', sentencePinyin: 'Zhège wèntí hái xūyào zài zǐxì zhēnzhuó yīxià, bùnéng cǎoshuài juédìng.', sentenceEnglish: 'This issue still needs to be carefully deliberated; we cannot make a hasty decision.' },
+            { id: 'b1-2', batch: 1, batchLabel: 'Batch 1', theme: 'Idioms / Chengyu', word: '潜移默化', pinyin: 'qián yí mò huà', meaning: 'A subtle, imperceptible influence on someone’s character, thinking, or habits over time.', sentence: '父母的言行对孩子有着潜移默化的影响。', sentencePinyin: 'Fùmǔ de yánxíng duì háizi yǒuzhe qiányímòhuà de yǐngxiǎng.', sentenceEnglish: 'Parents\' words and actions have a subtle, imperceptible influence on their children.' },
+            { id: 'b1-3', batch: 1, batchLabel: 'Batch 1', theme: 'Advanced General', word: '妥协', pinyin: 'tuǒ xié', meaning: 'To compromise; to come to terms or make concessions in order to reach an agreement.', sentence: '面对不合理的要求，他绝不会轻易妥协。', sentencePinyin: 'Miànduì bù hélǐ de yāoqiú, tā jué bù huì qīngyì tuǒxié.', sentenceEnglish: 'Faced with unreasonable demands, he will never easily compromise.' },
+            { id: 'b1-4', batch: 1, batchLabel: 'Batch 1', theme: 'Advanced General', word: '弥漫', pinyin: 'mí màn', meaning: 'To fill the air; to spread or permeate (smoke, fog, scent, or an atmosphere).', sentence: '清晨的森林里弥漫着薄雾和泥土的芬芳。', sentencePinyin: 'Qīngchén de sēnlín lǐ mímàn zhe bówù hé nítǔ de fēnfāng.', sentenceEnglish: 'The early morning forest was filled with thin mist and the fragrance of soil.' },
+            { id: 'b1-5', batch: 1, batchLabel: 'Batch 1', theme: 'Advanced General', word: '尴尬', pinyin: 'gān gà', meaning: 'Awkward, embarrassed, or in an uncomfortable predicament.', sentence: '认错人之后，他站在原地显得十分尴尬。', sentencePinyin: 'Rèncuò rén zhīhòu, tā zhàn zài yuándì xiǎnde shífēn gāngà.', sentenceEnglish: 'After mistaking someone for another person, he stood there looking extremely awkward.' },
+            { id: 'b1-6', batch: 1, batchLabel: 'Batch 1', theme: 'Business & Economics', word: '蓬勃', pinyin: 'péng bó', meaning: 'Vigorous, flourishing, or thriving (economies, industries, youth, or vitality).', sentence: '近年来，人工智能产业正在蓬勃发展。', sentencePinyin: 'Jìnnián lái, réngōng zhìnéng chǎnyè zhèngzài péngbó fāzhǎn.', sentenceEnglish: 'In recent years, the artificial intelligence industry has been developing vigorously.' },
+            { id: 'b1-7', batch: 1, batchLabel: 'Batch 1', theme: 'Advanced General', word: '瓶颈', pinyin: 'píng jǐng', meaning: 'A bottleneck; a critical stage or obstacle that slows down progress.', sentence: '他的语言学习遇到了瓶颈，急需寻找新的突破口。', sentencePinyin: 'Tā de yǔyán xuéxí yùdào le píngjǐng, jíxū xúnzhǎo xīn de tūpòkǒu.', sentenceEnglish: 'His language learning has hit a bottleneck, and he urgently needs a new breakthrough.' },
+            { id: 'b1-8', batch: 1, batchLabel: 'Batch 1', theme: 'Literary & Formal Written', word: '渊博', pinyin: 'yuān bó', meaning: 'Profound and extensive (specifically used to describe deep, broad knowledge or scholarship).', sentence: '这位老教授学识渊博，深受学生们的敬重。', sentencePinyin: 'Zhè wèi lǎo jiàoshòu xuéshí yuānbó, shēnshòu xuéshēngmen de jìngzhòng.', sentenceEnglish: 'This elderly professor has profound and extensive knowledge and is deeply respected.' },
+            { id: 'b1-9', batch: 1, batchLabel: 'Batch 1', theme: 'Advanced General', word: '敷衍', pinyin: 'fū yǎn', meaning: 'To be perfunctory; to go through the motions half-heartedly without genuine effort.', sentence: '做事要认真负责，千万不要敷衍了事。', sentencePinyin: 'Zuòshì yào rènzhēn fùzé, qiānwàn bùyào fūyǎn liǎoshì.', sentenceEnglish: 'You should be conscientious and responsible; never just go through the motions.' },
+            { id: 'b1-10', batch: 1, batchLabel: 'Batch 1', theme: 'Advanced General', word: '憧憬', pinyin: 'chōng jǐng', meaning: 'To look forward to; to long for or envision a bright future with hope.', sentence: '毕业生们对即将开始的职业生涯充满了憧憬。', sentencePinyin: 'Bìyèshēngmen duì jíjiāng kāishǐ de zhíyè shēngyá chōngmǎn le chōngjǐng.', sentenceEnglish: 'The graduates are full of hope and anticipation for their upcoming careers.' },
+
+            // Batch 2
+            { id: 'b2-1', batch: 2, batchLabel: 'Batch 2', theme: 'Literary & Formal Written', word: '剖析', pinyin: 'pōu xī', meaning: 'To dissect or analyze deeply (used for complex issues, texts, or psychology).', sentence: '这篇文章深刻地剖析了现代社会的人际关系。', sentencePinyin: 'Zhè piān wénzhāng shēnkè de pōuxī le xiàndài shèhuì de rénjì guānxì.', sentenceEnglish: 'This article deeply analyzes interpersonal relationships in modern society.' },
+            { id: 'b2-2', batch: 2, batchLabel: 'Batch 2', theme: 'Advanced General', word: '顾虑', pinyin: 'gù lǜ', meaning: 'Misgivings, apprehensions, or worries about potential negative consequences.', sentence: '请你打消顾虑，大胆地说出你的真实想法。', sentencePinyin: 'Qǐng nǐ dǎxiāo gùlǜ, dàdǎn de shuōchū nǐ de zhēnshí xiǎngfǎ.', sentenceEnglish: 'Please dispel your misgivings and boldly speak your true thoughts.' },
+            { id: 'b2-3', batch: 2, batchLabel: 'Batch 2', theme: 'Idioms / Chengyu', word: '根深蒂固', pinyin: 'gēn shēn dì gù', meaning: 'Deep-rooted or ingrained habits, beliefs, or prejudices that are hard to change.', sentence: '要改变人们根深蒂固的传统观念需要很长时间。', sentencePinyin: 'Yào gǎibiàn rénmen gēnshēndìgù de chuántǒng guānniàn xūyào hěn cháng shíjiān.', sentenceEnglish: 'Changing people\'s deep-rooted traditional concepts takes a very long time.' },
+            { id: 'b2-4', batch: 2, batchLabel: 'Batch 2', theme: 'Advanced General', word: '揣摩', pinyin: 'chuǎi mó', meaning: 'To try to figure out, fathom, or ponder hidden intentions or subtleties.', sentence: '演员花了几个月的时间去揣摩这个角色的心理。', sentencePinyin: 'Yǎnyuán huā le jǐ gè yuè de shíjiān qù chuǎimó zhège juésè de xīnlǐ.', sentenceEnglish: 'The actor spent several months pondering the psychology of this character.' },
+            { id: 'b2-5', batch: 2, batchLabel: 'Batch 2', theme: 'Business & Economics', word: '遏制', pinyin: 'è zhì', meaning: 'To contain, curb, or hold back inflation, disease spread, or negative trends.', sentence: '政府采取了多项措施来遏制房价的过快上涨。', sentencePinyin: 'Zhèngfǔ cǎiqǔ le duō xiàng cuòshī lái èzhì fángjià de guòkuài shàngzhǎng.', sentenceEnglish: 'The government adopted multiple measures to curb the excessively rapid rise in housing prices.' },
+            { id: 'b2-6', batch: 2, batchLabel: 'Batch 2', theme: 'Business & Economics', word: '契机', pinyin: 'qì jī', meaning: 'An opportune moment, turning point, or catalyst for significant change.', sentence: '这次合作为两家公司的共同发展提供了新的契机。', sentencePinyin: 'Zhè cì hézuò wèi liǎng jiā gōngsī de gòngtóng fāzhǎn tígōng le xīn de qìjī.', sentenceEnglish: 'This cooperation provided a new turning point for the joint development of both companies.' },
+            { id: 'b2-7', batch: 2, batchLabel: 'Batch 2', theme: 'Literary & Formal Written', word: '讳莫如深', pinyin: 'huì mò rú shēn', meaning: 'To guard a secret tightly; to keep one\'s mouth shut on a sensitive topic.', sentence: '他对当年离职的真正原因一直讳莫如深。', sentencePinyin: 'Tā duì dāngnián lízhí de zhēnzhèng yuányīn yīzhí huìmòrúshēn.', sentenceEnglish: 'He has always kept tightly silent about the real reason he resigned back then.' },
+            { id: 'b2-8', batch: 2, batchLabel: 'Batch 2', theme: 'Advanced General', word: '苛刻', pinyin: 'kē kè', meaning: 'Harsh, overly strict, or demanding rules, conditions, or terms.', sentence: '合同里的附加条件太苛刻了，我们无法接受。', sentencePinyin: 'Hétong lǐ de fùjiā tiáojiàn tài kēkè le, wǒmen wúfǎ jiēshòu.', sentenceEnglish: 'The additional terms in the contract are too harsh; we cannot accept them.' },
+            { id: 'b2-9', batch: 2, batchLabel: 'Batch 2', theme: 'Advanced General', word: '渲染', pinyin: 'xuàn rǎn', meaning: 'To exaggerate, play up, or create an emotional atmosphere.', sentence: '媒体过度渲染了这次事件的严重性，引起了不必要的恐慌。', sentencePinyin: 'Méitǐ guòdù xuànrǎn le zhè cì shìjiàn de yánzhòngxìng, yǐnqǐ le bù bìyào de kǒnghuāng.', sentenceEnglish: 'The media overly played up the severity of this incident, causing unnecessary panic.' },
+            { id: 'b2-10', batch: 2, batchLabel: 'Batch 2', theme: 'Advanced General', word: '循序渐进', pinyin: 'xún xù jiàn jìn', meaning: 'To advance step by step in proper sequence; to make steady, gradual progress.', sentence: '学习语言没有捷径，必须循序渐进，打好基础。', sentencePinyin: 'Xuéxí yǔyán méiyǒu jiéjìng, bìxū xúnxùjiànjìn, dǎhǎo jīchǔ.', sentenceEnglish: 'There are no shortcuts in learning a language; you must progress step by step.' },
+
+            // Batch 3
+            { id: 'b3-1', batch: 3, batchLabel: 'Batch 3', theme: 'Idioms / Chengyu', word: '寥寥无几', pinyin: 'liáo liáo wú jǐ', meaning: 'Very few; scarce; can be counted on one\'s fingers.', sentence: '尽管这场讲座非常专业，但真正能听懂的观众却寥寥无几。', sentencePinyin: 'Jǐnguǎn zhè chǎng jiǎngzuò fēicháng zhuānyè, dàn zhēnzhèng néng tīngdǒng de guānzhòng què liáoliáowújǐ.', sentenceEnglish: 'Although this lecture was very professional, the audience members who could truly understand it were very few.' },
+            { id: 'b3-2', batch: 3, batchLabel: 'Batch 3', theme: 'Business & Economics', word: '权衡', pinyin: 'quán héng', meaning: 'To weigh or balance options, pros and cons, or competing interests.', sentence: '在接受这份工作之前，她仔细权衡了薪资待遇与个人发展空间。', sentencePinyin: 'Zài jiēshòu zhè fèn gōngzuò zhīqián, tā zǐxì quánhéng le xīnzī dàiyù yǔ gèrén fāzhǎn kōngjiān.', sentenceEnglish: 'Before accepting this job, she carefully weighed the salary against personal development.' },
+            { id: 'b3-3', batch: 3, batchLabel: 'Batch 3', theme: 'Advanced General', word: '嗤之以鼻', pinyin: 'chī zhī yǐ bí', meaning: 'To snort contemptuously at something; to dismiss with utter disdain.', sentence: '对于这种毫无科学依据的谣言，专家们只是嗤之以鼻。', sentencePinyin: 'Duìyú zhè zhǒng háowú kēxué yījù de yáoyán, zhuānjiāmen zhǐshì chīzhīyǐbí.', sentenceEnglish: 'Toward rumors with no scientific basis like this, the experts merely dismissed them with disdain.' },
+            { id: 'b3-4', batch: 3, batchLabel: 'Batch 3', theme: 'Literary & Formal Written', word: '蕴含', pinyin: 'yùn hán', meaning: 'To contain, embody, or hold deeper meanings or emotions beneath the surface.', sentence: '这首看似简单的古诗其实蕴含着深刻的人生哲理。', sentencePinyin: 'Zhè shǒu kànsì jiǎndān de gǔshī qíshí yùnhán zhe shēnkè de rénshēng zhélǐ.', sentenceEnglish: 'This seemingly simple ancient poem actually contains profound life philosophy.' },
+            { id: 'b3-5', batch: 3, batchLabel: 'Batch 3', theme: 'Advanced General', word: '窘迫', pinyin: 'jiǒng pò', meaning: 'Embarrassed, awkward, cornered, or in a tight spot / financial hardship.', sentence: '面对记者犀利的提问，发言人一时显得有些窘迫。', sentencePinyin: 'Miànduì jìzhě xīlì de tíwèn, fāyánrén yīshí xiǎnde yǒuxiē jiǒngpò.', sentenceEnglish: 'Faced with the reporter\'s sharp questioning, the spokesperson momentarily appeared somewhat awkward.' },
+            { id: 'b3-6', batch: 3, batchLabel: 'Batch 3', theme: 'Literary & Formal Written', word: '毋庸置疑', pinyin: 'wú yōng zhì yí', meaning: 'Beyond a shadow of a doubt; indisputable.', sentence: '团队合作在大型项目中的重要性是毋庸置疑的。', sentencePinyin: 'Tuánduì hézuò zài dàxíng xiàngmù zhōng de zhòngyàoxìng shì wúyōngzhìyí de.', sentenceEnglish: 'The importance of teamwork in large-scale projects is beyond a shadow of a doubt.' },
+            { id: 'b3-7', batch: 3, batchLabel: 'Batch 3', theme: 'Advanced General', word: '蜕变', pinyin: 'tuì biàn', meaning: 'Metamorphosis; a qualitative transformation or shedding of an old self.', sentence: '经过几年的历练，他已经从一个青涩的实习生蜕变为部门骨干。', sentencePinyin: 'Jīngguò jǐ nián de lìliàn, tā yǐjīng cóng yīgè qīngsè de shíxíshēng tuìbiàn wéi bùmén gǔgàn.', sentenceEnglish: 'After years of tempering, he has transformed from a green intern into a core pillar.' },
+            { id: 'b3-8', batch: 3, batchLabel: 'Batch 3', theme: 'Advanced General', word: '默契', pinyin: 'mò qì', meaning: 'Tacit understanding; unspoken mutual agreement or seamless coordination.', sentence: '这两位搭档合作多年，在舞台上配合得极有默契。', sentencePinyin: 'Zhè liǎng wèi dādàng hézuò duōnián, zài wǔtái shàng pèihé de jí yǒu mòqì.', sentenceEnglish: 'These two partners have worked together for years and coordinate with extraordinary tacit understanding.' },
+            { id: 'b3-9', batch: 3, batchLabel: 'Batch 3', theme: 'Advanced General', word: '敷衍塞责', pinyin: 'fū yǎn sè zé', meaning: 'To perform one\'s duty perfunctorily; to evade responsibility and do the bare minimum.', sentence: '面对客户投诉，客服人员不能只是敷衍塞责，而要真正解决问题。', sentencePinyin: 'Miànduì kèhù tóusù, kèfú rényuán bùnéng zhǐshì fūyǎnsèzé, ér yào zhēnzhèng jiějué wèntí.', sentenceEnglish: 'When facing customer complaints, staff cannot just go through the motions; they must genuinely solve it.' },
+            { id: 'b3-10', batch: 3, batchLabel: 'Batch 3', theme: 'Advanced General', word: '震撼', pinyin: 'zhèn hàn', meaning: 'To shock, shake, or move deeply (awe-inspiring or overwhelming impact).', sentence: '纪录片中展现的自然奇观让所有观众都感到无比震撼。', sentencePinyin: 'Jìlùpiàn zhōng zhǎnxiàn de zìrán qíguān ràng suǒyǒu guānzhòng dōu gǎndào wúbǐ zhènhàn.', sentenceEnglish: 'The natural wonders showcased in the documentary left all viewers feeling deeply awestruck.' }
+        ];
+
+        // =========================================================================
+        // 2. APPLICATION STATE & CLOUD + FALLBACK PERSISTENCE
+        // =========================================================================
+        const STORAGE_KEY_BATCHES = 'mandarin_custom_batches_v1';
+        const STORAGE_KEY_FAVORITES = 'mandarin_favorites_v1';
+
+        const state = window.state = {
+            vocabulary: [...INITIAL_VOCABULARY],
+            favorites: [],
+            selectedBatch: 'all', // 'all' | 'favorites' | number
+            searchQuery: '',
+            showPinyin: true,
+            showEnglish: true,
+            viewMode: 'grid', // 'grid' | 'flashcard'
+            flashcardIndex: 0,
+            isFlashcardFlipped: false,
+            speechRate: 1.0,
+            selectedVoiceURI: '',
+            isAutoPlaying: false,
+            autoPlayAbort: false
+        };
+
+        window.applyCloudBatches = function(cloudWords) {
+            const existingBase = new Set(INITIAL_VOCABULARY.map(item => item.word));
+            const seenCustom = new Set();
+            const cleanCustom = [];
+
+            cloudWords
+                .sort((a, b) => (a.batch || 0) - (b.batch || 0))
+                .forEach(item => {
+                    if (item && item.word && !existingBase.has(item.word) && !seenCustom.has(item.word)) {
+                        seenCustom.add(item.word);
+                        cleanCustom.push(item);
+                    }
+                });
+
+            state.vocabulary = [...INITIAL_VOCABULARY, ...cleanCustom];
+            renderAll();
+        };
+
+        window.applyCloudFavorites = function(cloudFavs) {
+            state.favorites = cloudFavs.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+            renderAll();
+        };
+
+        function loadPersistedData() {
+            try {
+                const rawBatches = localStorage.getItem(STORAGE_KEY_BATCHES);
+                if (rawBatches) {
+                    const parsedBatches = JSON.parse(rawBatches);
+                    if (Array.isArray(parsedBatches) && parsedBatches.length > 0) {
+                        const existingWords = new Set(INITIAL_VOCABULARY.map(item => item.word));
+                        const uniqueCustom = parsedBatches.filter(item => item && item.word && !existingWords.has(item.word));
+                        state.vocabulary = [...INITIAL_VOCABULARY, ...uniqueCustom];
+                    }
+                }
+            } catch (e) {}
+
+            try {
+                const rawFavs = localStorage.getItem(STORAGE_KEY_FAVORITES);
+                if (rawFavs) {
+                    const parsedFavs = JSON.parse(rawFavs);
+                    if (Array.isArray(parsedFavs)) {
+                        state.favorites = parsedFavs;
+                    }
+                }
+            } catch (e) {}
+        }
+
+        async function saveBatchData(batchNumber, batchWords) {
+            try {
+                const customOnly = state.vocabulary.filter(item => item.batch > 3);
+                localStorage.setItem(STORAGE_KEY_BATCHES, JSON.stringify(customOnly));
+            } catch (e) {}
+
+            if (window.cloudSaveBatch) {
+                await window.cloudSaveBatch(batchNumber, batchWords);
+            }
+            updateStorageIndicator();
+        }
+
+        function saveFavoritesLocally() {
+            try {
+                localStorage.setItem(STORAGE_KEY_FAVORITES, JSON.stringify(state.favorites));
+            } catch (e) {}
+        }
+
+        function updateStorageIndicator() {
+            const total = state.vocabulary.length;
+            const heroCount = document.getElementById('heroWordCount');
+            const mobileCount = document.getElementById('mobileWordCount');
+            const resetBtn = document.getElementById('resetBatchesBtn');
+
+            if (window.refreshCloudBadge) {
+                window.refreshCloudBadge();
+            }
+            if (heroCount) heroCount.textContent = total;
+            if (mobileCount) mobileCount.textContent = `${total} Words`;
+
+            const hasCustom = state.vocabulary.some(item => item.batch > 3);
+            if (resetBtn) {
+                if (hasCustom) resetBtn.classList.remove('hidden');
+                else resetBtn.classList.add('hidden');
+            }
+        }
+
+        // =========================================================================
+        // 3. FAVORITES MANAGEMENT
+        // =========================================================================
+        function isWordFavorited(wordText) {
+            return state.favorites.some(fav => fav.word === wordText);
+        }
+
+        async function toggleFavoriteById(itemId) {
+            const targetItem = state.vocabulary.find(v => v.id === itemId) || state.favorites.find(f => f.id === itemId);
+            if (!targetItem) return;
+
+            const existingIdx = state.favorites.findIndex(fav => fav.word === targetItem.word);
+            if (existingIdx >= 0) {
+                state.favorites.splice(existingIdx, 1);
+                saveFavoritesLocally();
+                renderAll();
+                showStatus(`Removed "${targetItem.word}" from Favorites.`, 'info');
+                if (window.cloudSetFavorite) await window.cloudSetFavorite(targetItem, false);
+            } else {
+                const favRecord = { ...targetItem, savedAt: Date.now() };
+                state.favorites.unshift(favRecord);
+                saveFavoritesLocally();
+                renderAll();
+                showStatus(`Saved "${targetItem.word}" to Cloud Favorites ★`, 'success');
+                if (window.cloudSetFavorite) await window.cloudSetFavorite(favRecord, true);
+            }
+        }
+
+        function toggleCurrentFlashcardFavorite() {
+            const items = getFilteredVocabulary();
+            const item = items[state.flashcardIndex];
+            if (!item) return;
+            toggleFavoriteById(item.id);
+        }
+
+        // =========================================================================
+        // 5. AI +10 BATCH GENERATOR (GEMINI API WITH EXPONENTIAL BACKOFF)
+        // =========================================================================
+        async function fetchGeminiWithRetry(apiUrl, payload, maxRetries = 4) {
+            let delay = 1000;
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                    if (attempt === maxRetries) {
+                        throw new Error(`API returned status ${response.status}`);
+                    }
+                } catch (err) {
+                    if (attempt === maxRetries) throw err;
+                }
+                await new Promise(r => setTimeout(r, delay));
+                delay *= 2;
+            }
+        }
+
+        async function generateNewBatch() {
+            const btn = document.getElementById('generateBtn');
+            const spinner = document.getElementById('generateSpinner');
+            const label = document.getElementById('generateBtnLabel');
+            const topicSelect = document.getElementById('topicSelect');
+
+            const chosenTopic = topicSelect ? topicSelect.value : 'HSK 5–6 (Advanced General)';
+            const shortTag = chosenTopic.split('(')[0].trim();
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            label.textContent = 'Generating 10 Words...';
+
+            const existingWordsList = state.vocabulary.map(v => v.word).join(', ');
+
+            // Check if a custom batch (> 3) with this exact HSK level / theme already exists
+            const existingMatchingCustom = state.vocabulary.find(v => v.batch > 3 && v.theme === shortTag);
+            const targetBatchNum = existingMatchingCustom
+                ? existingMatchingCustom.batch
+                : Math.max(...state.vocabulary.map(v => v.batch), 3) + 1;
+            const targetBatchLabel = existingMatchingCustom
+                ? (existingMatchingCustom.batchLabel || `Batch ${targetBatchNum}`)
+                : `Batch ${targetBatchNum}`;
+
+            const prompt = `Generate exactly 10 distinct Mandarin Chinese vocabulary words or idioms tailored for level/theme: "${chosenTopic}".
+Do NOT repeat any of these already learned words: [${existingWordsList}].
+Return ONLY valid JSON as an array of 10 objects with these exact keys:
+- "word": Simplified Chinese characters
+- "pinyin": Tone-marked Pinyin with spaces between syllables
+- "meaning": Clear, nuanced English explanation
+- "sentence": A natural, idiomatic Simplified Chinese example sentence using the word
+- "sentencePinyin": Tone-marked Pinyin for the example sentence
+- "sentenceEnglish": Natural English translation of the example sentence`;
+
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "ARRAY",
+                            items: {
+                                type: "OBJECT",
+                                properties: {
+                                    word: { type: "STRING" },
+                                    pinyin: { type: "STRING" },
+                                    meaning: { type: "STRING" },
+                                    sentence: { type: "STRING" },
+                                    sentencePinyin: { type: "STRING" },
+                                    sentenceEnglish: { type: "STRING" }
+                                },
+                                required: ["word", "pinyin", "meaning", "sentence", "sentencePinyin", "sentenceEnglish"]
+                            }
+                        }
+                    }
+                };
+
+                const data = await fetchGeminiWithRetry(apiUrl, payload);
+                const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+                const parsedItems = JSON.parse(rawText);
+
+                if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
+                    throw new Error('Invalid vocabulary response format');
+                }
+
+                const existingSet = new Set(state.vocabulary.map(v => v.word));
+                const newEntries = [];
+
+                parsedItems.forEach((item, idx) => {
+                    if (item && item.word && !existingSet.has(item.word)) {
+                        existingSet.add(item.word);
+                        newEntries.push({
+                            id: `b${targetBatchNum}-${idx + 1}-${Date.now()}`,
+                            batch: targetBatchNum,
+                            batchLabel: targetBatchLabel,
+                            theme: shortTag,
+                            word: String(item.word).trim(),
+                            pinyin: String(item.pinyin || '').trim(),
+                            meaning: String(item.meaning || '').trim(),
+                            sentence: String(item.sentence || '').trim(),
+                            sentencePinyin: String(item.sentencePinyin || '').trim(),
+                            sentenceEnglish: String(item.sentenceEnglish || '').trim()
+                        });
+                    }
+                });
+
+                if (newEntries.length === 0) {
+                    throw new Error('No unique words returned. Please try again.');
+                }
+
+                state.vocabulary.push(...newEntries);
+
+                // Save the full combined batch words for this batch number so Cloud Sync updates the whole batch
+                const fullBatchWords = state.vocabulary.filter(v => v.batch === targetBatchNum);
+                await saveBatchData(targetBatchNum, fullBatchWords);
+
+                state.selectedBatch = targetBatchNum;
+                state.flashcardIndex = 0;
+                state.isFlashcardFlipped = false;
+                renderAll();
+
+                const syncNote = window.isCloudConnected && window.isCloudConnected() ? ' & synced to cloud' : '';
+                const actionSummary = existingMatchingCustom
+                    ? `Added ${newEntries.length} words to existing ${targetBatchLabel} · ${shortTag} (now ${fullBatchWords.length} words)`
+                    : `Created ${targetBatchLabel} (${newEntries.length} ${shortTag} words)`;
+                showStatus(`${actionSummary}${syncNote}!`, 'success');
+            } catch (err) {
+                console.error(err);
+                showStatus(`Could not generate new batch: ${err.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                label.textContent = '+10 New Words';
+            }
+        }
+
+        // =========================================================================
+        // 6. FILTERING & RENDERING PIPELINE
+        // =========================================================================
+        function getFilteredVocabulary() {
+            let baseList = [];
+            if (state.selectedBatch === 'favorites') {
+                baseList = [...state.favorites];
+            } else if (state.selectedBatch === 'all') {
+                baseList = [...state.vocabulary];
+            } else {
+                baseList = state.vocabulary.filter(item => item.batch === state.selectedBatch);
+            }
+
+            if (!state.searchQuery) return baseList;
+
+            const q = state.searchQuery.toLowerCase();
+            return baseList.filter(item =>
+                item.word.toLowerCase().includes(q) ||
+                item.pinyin.toLowerCase().includes(q) ||
+                item.meaning.toLowerCase().includes(q) ||
+                (item.theme && item.theme.toLowerCase().includes(q)) ||
+                item.sentence.toLowerCase().includes(q) ||
+                item.sentenceEnglish.toLowerCase().includes(q)
+            );
+        }
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function highlightTargetWordInSentence(sentence, word) {
+            const safeSentence = escapeHtml(sentence);
+            const safeWord = escapeHtml(word);
+            if (!safeWord || !safeSentence.includes(safeWord)) return safeSentence;
+            return safeSentence.split(safeWord).join(
+                `<span class="font-bold text-rose-700 dark:text-rose-300 bg-rose-100/80 dark:bg-rose-950/90 px-1 rounded">${safeWord}</span>`
+            );
+        }
+
+        function renderBatchTabs() {
+            const container = document.getElementById('batchTabsContainer');
+            if (!container) return;
+
+            const batchMap = new Map();
+            state.vocabulary.forEach(item => {
+                if (!batchMap.has(item.batch)) {
+                    batchMap.set(item.batch, {
+                        batch: item.batch,
+                        label: item.batchLabel || `Batch ${item.batch}`,
+                        theme: item.theme || 'HSK 5–6',
+                        count: 0
+                    });
+                }
+                batchMap.get(item.batch).count++;
+            });
+
+            const activeTabClass = "shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 dark:bg-rose-600 text-white shadow-xs transition";
+            const inactiveTabClass = "shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition";
+
+            const favActiveClass = "shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 shadow-xs transition";
+            const favInactiveClass = "shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition";
+
+            let html = `
+                <button type="button" onclick="selectBatch('all')" class="${state.selectedBatch === 'all' ? activeTabClass : inactiveTabClass}">
+                    <span>All Words</span>
+                    <span class="opacity-75">(${state.vocabulary.length})</span>
+                </button>
+                <button type="button" onclick="selectBatch('favorites')" class="${state.selectedBatch === 'favorites' ? favActiveClass : favInactiveClass}">
+                    <span>★ Favorites</span>
+                    <span class="px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 text-[11px]">${state.favorites.length}</span>
+                </button>
+            `;
+
+            Array.from(batchMap.values()).sort((a, b) => a.batch - b.batch).forEach(b => {
+                const isSelected = state.selectedBatch === b.batch;
+                const tag = b.batch > 3 ? ` · ${escapeHtml(b.theme)}` : '';
+                html += `
+                    <button type="button" onclick="selectBatch(${b.batch})" class="${isSelected ? activeTabClass : inactiveTabClass}">
+                        <span>${escapeHtml(b.label)}${tag}</span>
+                        <span class="opacity-75">(${b.count})</span>
+                    </button>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            const favBanner = document.getElementById('favoritesPageHeader');
+            const favCountBadge = document.getElementById('favoritesPageCountBadge');
+            if (favBanner) {
+                if (state.selectedBatch === 'favorites') {
+                    favBanner.classList.remove('hidden');
+                    if (favCountBadge) favCountBadge.textContent = `${state.favorites.length} ${state.favorites.length === 1 ? 'word' : 'words'}`;
+                } else {
+                    favBanner.classList.add('hidden');
+                }
+            }
+        }
+
+        function renderGridView() {
+            const container = document.getElementById('gridViewContainer');
+            const emptyState = document.getElementById('emptyState');
+            if (!container) return;
+
+            const items = getFilteredVocabulary();
+            if (items.length === 0) {
+                container.innerHTML = '';
+                container.classList.add('hidden');
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyState) emptyState.classList.add('hidden');
+            if (state.viewMode === 'grid') {
+                container.classList.remove('hidden');
+            }
+
+            container.innerHTML = items.map(item => {
+                const fav = isWordFavorited(item.word);
+                const favBtnClass = fav
+                    ? "p-2 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-500 dark:text-amber-300 border border-amber-300 dark:border-amber-700 transition"
+                    : "p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-amber-500 dark:hover:text-amber-300 border border-slate-200 dark:border-slate-700 transition";
+
+                return `
+                    <article class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between gap-4">
+                        <div class="space-y-3">
+                            <!-- Top Row: Word, Pinyin, Level Tag & Action Buttons -->
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                            ${escapeHtml(item.batchLabel || 'Batch ' + item.batch)}
+                                        </span>
+                                        ${item.theme ? `<span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200/70 dark:border-rose-800/60">${escapeHtml(item.theme)}</span>` : ''}
+                                    </div>
+                                    <div class="flex items-baseline gap-3 flex-wrap">
+                                        <h3 class="font-chinese text-3xl font-bold text-slate-900 dark:text-white tracking-wide">${escapeHtml(item.word)}</h3>
+                                        <span class="${state.showPinyin ? '' : 'hidden'} text-base font-semibold text-rose-600 dark:text-rose-400">${escapeHtml(item.pinyin)}</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <button type="button" onclick="toggleFavoriteById('${item.id}')" class="${favBtnClass}" title="${fav ? 'Remove from Favorites' : 'Save to Favorites'}" aria-label="Toggle Favorite">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                        </svg>
+                                    </button>
+                                    <button type="button" id="word-btn-${item.id}" onclick="speakMandarin('${escapeHtml(item.word)}', 'word-btn-${item.id}')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/70 text-xs font-semibold transition" title="Pronounce Word">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414z"/>
+                                        </svg>
+                                        <span>Word</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- English Definition -->
+                            <p class="${state.showEnglish ? '' : 'hidden'} text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                                ${escapeHtml(item.meaning)}
+                            </p>
+                        </div>
+
+                        <!-- Example Sentence Box -->
+                        <div class="bg-slate-50 dark:bg-slate-800/70 rounded-xl p-3.5 border border-slate-200/70 dark:border-slate-700/70 space-y-1.5">
+                            <div class="flex items-start justify-between gap-2">
+                                <p class="font-chinese text-base font-medium text-slate-900 dark:text-slate-100 leading-relaxed">
+                                    ${highlightTargetWordInSentence(item.sentence, item.word)}
+                                </p>
+                                <button type="button" id="sent-btn-${item.id}" onclick="speakMandarin('${escapeHtml(item.sentence)}', 'sent-btn-${item.id}')" class="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-100/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-900 text-xs font-semibold transition" title="Pronounce Sentence">
+                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414z"/>
+                                    </svg>
+                                    <span>Sentence</span>
+                                </button>
+                            </div>
+                            <p class="${state.showPinyin ? '' : 'hidden'} text-xs text-rose-700 dark:text-rose-400 font-medium">
+                                ${escapeHtml(item.sentencePinyin)}
+                            </p>
+                            <p class="${state.showEnglish ? '' : 'hidden'} text-xs text-slate-600 dark:text-slate-400 italic">
+                                "${escapeHtml(item.sentenceEnglish)}"
+                            </p>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function renderFlashcardView() {
+            const fcSection = document.getElementById('flashcardViewContainer');
+            const emptyState = document.getElementById('emptyState');
+            const items = getFilteredVocabulary();
+
+            if (items.length === 0) {
+                if (fcSection) fcSection.classList.add('hidden');
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyState) emptyState.classList.add('hidden');
+            if (state.viewMode === 'flashcard' && fcSection) {
+                fcSection.classList.remove('hidden');
+            }
+
+            if (state.flashcardIndex >= items.length) {
+                state.flashcardIndex = 0;
+            }
+
+            const item = items[state.flashcardIndex];
+            const inner = document.getElementById('flashcardInner');
+            if (inner) {
+                if (state.isFlashcardFlipped) inner.classList.add('flashcard-flipped');
+                else inner.classList.remove('flashcard-flipped');
+            }
+
+            document.getElementById('flashcardCounter').textContent = `Card ${state.flashcardIndex + 1} of ${items.length}`;
+            document.getElementById('flashcardBatchBadge').textContent = `${item.batchLabel || 'Batch ' + item.batch}${item.theme ? ' · ' + item.theme : ''}`;
+
+            // Favorite state on flashcard front & back
+            const fav = isWordFavorited(item.word);
+            const frontFavBtn = document.getElementById('fcFrontFavBtn');
+            const frontFavLabel = document.getElementById('fcFrontFavLabel');
+            const backFavBtn = document.getElementById('fcBackFavBtn');
+
+            if (frontFavBtn && frontFavLabel) {
+                if (fav) {
+                    frontFavBtn.className = "inline-flex items-center gap-1 px-3 py-2 rounded-xl border text-xs font-semibold bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-300 border-amber-300 dark:border-amber-700 transition";
+                    frontFavLabel.textContent = "Favorited";
+                } else {
+                    frontFavBtn.className = "inline-flex items-center gap-1 px-3 py-2 rounded-xl border text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-amber-500 transition";
+                    frontFavLabel.textContent = "Favorite";
+                }
+            }
+
+            if (backFavBtn) {
+                backFavBtn.className = fav
+                    ? "p-2.5 rounded-xl border bg-amber-100 dark:bg-amber-900/60 text-amber-500 dark:text-amber-300 border-amber-300 dark:border-amber-700 transition"
+                    : "p-2.5 rounded-xl border bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-amber-500 transition";
+            }
+
+            // Front
+            document.getElementById('fcChinese').textContent = item.word;
+            const frontPinyinEl = document.getElementById('fcPinyinFront');
+            frontPinyinEl.textContent = item.pinyin;
+            if (state.showPinyin) frontPinyinEl.classList.remove('hidden');
+            else frontPinyinEl.classList.add('hidden');
+
+            // Back
+            document.getElementById('fcBackChinese').textContent = item.word;
+            document.getElementById('fcBackPinyin').textContent = item.pinyin;
+            document.getElementById('fcBackMeaning').textContent = item.meaning;
+            document.getElementById('fcSentenceCn').innerHTML = highlightTargetWordInSentence(item.sentence, item.word);
+            document.getElementById('fcSentencePy').textContent = item.sentencePinyin;
+            document.getElementById('fcSentenceEn').textContent = `"${item.sentenceEnglish}"`;
+        }
+
+        function flipFlashcard() {
+            state.isFlashcardFlipped = !state.isFlashcardFlipped;
+            const inner = document.getElementById('flashcardInner');
+            if (state.isFlashcardFlipped) {
+                inner.classList.add('flashcard-flipped');
+            } else {
+                inner.classList.remove('flashcard-flipped');
+            }
+        }
+
+        function nextFlashcard() {
+            const items = getFilteredVocabulary();
+            if (items.length === 0) return;
+            state.flashcardIndex = (state.flashcardIndex + 1) % items.length;
+            state.isFlashcardFlipped = false;
+            renderFlashcardView();
+        }
+
+        function prevFlashcard() {
+            const items = getFilteredVocabulary();
+            if (items.length === 0) return;
+            state.flashcardIndex = (state.flashcardIndex - 1 + items.length) % items.length;
+            state.isFlashcardFlipped = false;
+            renderFlashcardView();
+        }
+
+        function shuffleFlashcards() {
+            const items = getFilteredVocabulary();
+            if (items.length <= 1) return;
+            let nextIdx = state.flashcardIndex;
+            while (nextIdx === state.flashcardIndex) {
+                nextIdx = Math.floor(Math.random() * items.length);
+            }
+            state.flashcardIndex = nextIdx;
+            state.isFlashcardFlipped = false;
+            renderFlashcardView();
+        }
+
+        function speakCurrentFlashcardWord() {
+            const items = getFilteredVocabulary();
+            const item = items[state.flashcardIndex];
+            if (item) speakMandarin(item.word, 'fcFrontAudioBtn');
+        }
+
+        function speakCurrentFlashcardSentence() {
+            const items = getFilteredVocabulary();
+            const item = items[state.flashcardIndex];
+            if (item) speakMandarin(item.sentence, 'fcSentenceAudioBtn');
+        }
+
+        // =========================================================================
+        // 7. UI NAVIGATION, SEARCH & VISIBILITY CONTROLS
+        // =========================================================================
+        function selectBatch(batchSelection) {
+            stopAutoPlay();
+            state.selectedBatch = batchSelection;
+            state.flashcardIndex = 0;
+            state.isFlashcardFlipped = false;
+            renderAll();
+        }
+
+        function handleSearch(query) {
+            state.searchQuery = query.trim();
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (state.searchQuery) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            state.flashcardIndex = 0;
+            state.isFlashcardFlipped = false;
+            renderAll();
+        }
+
+        function clearSearch() {
+            state.searchQuery = '';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            state.flashcardIndex = 0;
+            state.isFlashcardFlipped = false;
+            renderAll();
+        }
+
+        function toggleVisibilitySetting(key, isChecked) {
+            state[key] = isChecked;
+            renderAll();
+        }
+
+        function setViewMode(mode) {
+            state.viewMode = mode;
+            const gridBtn = document.getElementById('viewGridBtn');
+            const fcBtn = document.getElementById('viewFlashcardBtn');
+            const gridContainer = document.getElementById('gridViewContainer');
+            const fcContainer = document.getElementById('flashcardViewContainer');
+
+            if (mode === 'grid') {
+                gridBtn.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition";
+                fcBtn.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition";
+                if (gridContainer) gridContainer.classList.remove('hidden');
+                if (fcContainer) fcContainer.classList.add('hidden');
+            } else {
+                fcBtn.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition";
+                gridBtn.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition";
+                if (gridContainer) gridContainer.classList.add('hidden');
+                if (fcContainer) fcContainer.classList.remove('hidden');
+                renderFlashcardView();
+            }
+        }
+
+        // =========================================================================
+        // 8. MANDARIN AUDIO SYNTHESIS & PLAY-ALL SEQUENTIAL STUDY
+        // =========================================================================
+        function populateMandarinVoices() {
+            if (!('speechSynthesis' in window)) return;
+            const select = document.getElementById('voiceSelect');
+            if (!select) return;
+
+            const voices = window.speechSynthesis.getVoices();
+            const mandarinVoices = voices.filter(v => v.lang.startsWith('zh') || v.lang.includes('cmn') || v.lang.includes('Mandarin'));
+            const targetVoices = mandarinVoices.length > 0 ? mandarinVoices : voices;
+
+            // Default to Tingting (Tingting / Ting-Ting) when available
+            if (!state.selectedVoiceURI && targetVoices.length > 0) {
+                const tingtingVoice = targetVoices.find(v => /ting[- ]?ting/i.test(v.name) || /ting[- ]?ting/i.test(v.voiceURI));
+                state.selectedVoiceURI = tingtingVoice ? tingtingVoice.voiceURI : targetVoices[0].voiceURI;
+            }
+
+            let html = '';
+            targetVoices.forEach(v => {
+                const isSelected = v.voiceURI === state.selectedVoiceURI ? 'selected' : '';
+                html += `<option value="${v.voiceURI}" ${isSelected} class="dark:bg-slate-800">${v.name} (${v.lang})</option>`;
+            });
+
+            if (!html) {
+                html = '<option value="" class="dark:bg-slate-800">Default Browser Mandarin Voice</option>';
+            }
+            select.innerHTML = html;
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            try {
+                localStorage.setItem('mandarin_studio_theme', isDark ? 'dark' : 'light');
+            } catch (e) {}
+        }
+
+        function setSpeechRate(rate) {
+            state.speechRate = rate;
+            const slowBtn = document.getElementById('speedSlowBtn');
+            const normalBtn = document.getElementById('speedNormalBtn');
+            if (rate === 0.7) {
+                slowBtn.className = "px-2.5 py-1 text-xs font-semibold rounded-lg transition bg-white dark:bg-slate-700 text-rose-700 dark:text-rose-300 shadow-sm";
+                normalBtn.className = "px-2.5 py-1 text-xs font-semibold rounded-lg transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white";
+            } else {
+                normalBtn.className = "px-2.5 py-1 text-xs font-semibold rounded-lg transition bg-white dark:bg-slate-700 text-rose-700 dark:text-rose-300 shadow-sm";
+                slowBtn.className = "px-2.5 py-1 text-xs font-semibold rounded-lg transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white";
+            }
+        }
+
+        function speakMandarin(text, buttonId = null) {
+            if (!('speechSynthesis' in window)) {
+                showStatus('Speech synthesis is not supported in this browser.', 'error');
+                return;
+            }
+
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-CN';
+            utterance.rate = state.speechRate;
+
+            if (state.selectedVoiceURI) {
+                const voices = window.speechSynthesis.getVoices();
+                const matchedVoice = voices.find(v => v.voiceURI === state.selectedVoiceURI);
+                if (matchedVoice) utterance.voice = matchedVoice;
+            }
+
+            let btnEl = buttonId ? document.getElementById(buttonId) : null;
+            if (btnEl) btnEl.classList.add('speaking-pulse', 'bg-rose-200', 'dark:bg-rose-900');
+
+            utterance.onend = () => {
+                if (btnEl) btnEl.classList.remove('speaking-pulse', 'bg-rose-200', 'dark:bg-rose-900');
+            };
+            utterance.onerror = () => {
+                if (btnEl) btnEl.classList.remove('speaking-pulse', 'bg-rose-200', 'dark:bg-rose-900');
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function stopAutoPlay() {
+            state.isAutoPlaying = false;
+            state.autoPlayAbort = true;
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            const playAllBtn = document.getElementById('playAllBtn');
+            const playFavoritesBtn = document.getElementById('playFavoritesBtn');
+            const playAllIcon = document.getElementById('playAllIcon');
+            const playAllText = document.getElementById('playAllText');
+
+            if (playAllBtn) playAllBtn.className = "inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 dark:bg-rose-600 text-white hover:bg-slate-800 dark:hover:bg-rose-500 active:scale-[0.99] transition shadow-sm";
+            if (playFavoritesBtn) playFavoritesBtn.className = "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-xs transition";
+            if (playAllIcon) playAllIcon.innerHTML = '<path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>';
+            if (playAllText) playAllText.textContent = state.selectedBatch === 'favorites' ? 'Play All Favorites' : 'Play All in View';
+        }
+
+        async function togglePlayAll() {
+            if (state.isAutoPlaying) {
+                stopAutoPlay();
+                return;
+            }
+
+            const items = getFilteredVocabulary();
+            if (items.length === 0) {
+                showStatus('No words in current view to play.', 'info');
+                return;
+            }
+
+            state.isAutoPlaying = true;
+            state.autoPlayAbort = false;
+
+            const playAllBtn = document.getElementById('playAllBtn');
+            const playFavoritesBtn = document.getElementById('playFavoritesBtn');
+            const playAllIcon = document.getElementById('playAllIcon');
+            const playAllText = document.getElementById('playAllText');
+
+            if (playAllBtn) playAllBtn.className = "inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white animate-pulse shadow-sm";
+            if (playFavoritesBtn) playFavoritesBtn.className = "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-600 text-white animate-pulse shadow-sm";
+            if (playAllIcon) playAllIcon.innerHTML = '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>';
+            if (playAllText) playAllText.textContent = 'Stop Audio Study';
+
+            for (let i = 0; i < items.length; i++) {
+                if (!state.isAutoPlaying || state.autoPlayAbort) break;
+                const item = items[i];
+
+                if (state.viewMode === 'flashcard') {
+                    state.flashcardIndex = i;
+                    state.isFlashcardFlipped = false;
+                    renderFlashcardView();
+                }
+
+                await speakTextPromise(item.word);
+                if (!state.isAutoPlaying || state.autoPlayAbort) break;
+                await new Promise(r => setTimeout(r, 600));
+
+                await speakTextPromise(item.sentence);
+                if (!state.isAutoPlaying || state.autoPlayAbort) break;
+                await new Promise(r => setTimeout(r, 1200));
+            }
+
+            stopAutoPlay();
+        }
+
+        function speakTextPromise(text) {
+            return new Promise((resolve) => {
+                if (!('speechSynthesis' in window)) {
+                    resolve();
+                    return;
+                }
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-CN';
+                utterance.rate = state.speechRate;
+
+                if (state.selectedVoiceURI) {
+                    const voices = window.speechSynthesis.getVoices();
+                    const matchedVoice = voices.find(v => v.voiceURI === state.selectedVoiceURI);
+                    if (matchedVoice) utterance.voice = matchedVoice;
+                }
+
+                utterance.onend = () => resolve();
+                utterance.onerror = () => resolve();
+                window.speechSynthesis.speak(utterance);
+            });
+        }
+
+        // =========================================================================
+        // 9. STATUS TOAST, BACKUP & INITIALIZATION
+        // =========================================================================
+        function showStatus(message, type = 'success') {
+            const banner = document.getElementById('statusBanner');
+            const msgEl = document.getElementById('statusMessage');
+            const iconEl = document.getElementById('statusIcon');
+            if (!banner || !msgEl) return;
+
+            banner.className = `rounded-2xl px-4 py-3 text-sm font-medium flex items-center justify-between gap-3 shadow-sm border transition-all ${
+                type === 'success'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/80 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100'
+                    : type === 'error'
+                    ? 'bg-rose-50 dark:bg-rose-950/80 border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-100'
+                    : 'bg-amber-50 dark:bg-amber-950/80 border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-100'
+            }`;
+
+            iconEl.innerHTML = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
+            msgEl.textContent = message;
+            banner.classList.remove('hidden');
+
+            setTimeout(() => {
+                hideStatus();
+            }, 6000);
+        }
+
+        function hideStatus() {
+            const banner = document.getElementById('statusBanner');
+            if (banner) banner.classList.add('hidden');
+        }
+
+        function renderAll() {
+            renderBatchTabs();
+            if (state.viewMode === 'grid') {
+                renderGridView();
+            } else {
+                renderFlashcardView();
+            }
+            updateStorageIndicator();
+        }
+
+        function triggerImportBackup() {
+            const fileInput = document.getElementById('importFileInput');
+            if (fileInput) {
+                fileInput.value = '';
+                fileInput.click();
+            }
+        }
+
+        async function handleImportBackupFile(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const parsed = JSON.parse(text);
+
+                const importedVocab = Array.isArray(parsed.vocabulary) ? parsed.vocabulary : [];
+                const importedFavs = Array.isArray(parsed.favorites) ? parsed.favorites : [];
+
+                if (importedVocab.length === 0 && importedFavs.length === 0) {
+                    showStatus('No valid batches or favorites found in this backup file.', 'error');
+                    return;
+                }
+
+                const existingWords = new Set(state.vocabulary.map(v => v.word));
+                const batchesToSave = new Map();
+
+                importedVocab.forEach(item => {
+                    if (item && item.word && item.batch > 3 && !existingWords.has(item.word)) {
+                        existingWords.add(item.word);
+                        state.vocabulary.push(item);
+                        if (!batchesToSave.has(item.batch)) batchesToSave.set(item.batch, []);
+                        batchesToSave.get(item.batch).push(item);
+                    }
+                });
+
+                for (const [bNum, words] of batchesToSave.entries()) {
+                    await saveBatchData(bNum, words);
+                }
+
+                const existingFavs = new Set(state.favorites.map(f => f.word));
+                for (const fav of importedFavs) {
+                    if (fav && fav.word && !existingFavs.has(fav.word)) {
+                        existingFavs.add(fav.word);
+                        state.favorites.unshift(fav);
+                        if (window.cloudSetFavorite) await window.cloudSetFavorite(fav, true);
+                    }
+                }
+                saveFavoritesLocally();
+
+                renderAll();
+                showStatus(`Restored ${batchesToSave.size} custom batch(es) and ${importedFavs.length} favorite(s)!`, 'success');
+            } catch (err) {
+                showStatus('Invalid JSON backup file. Please choose a valid Mandarin Studio export.', 'error');
+            }
+        }
+
+        function exportVocabularyBackup() {
+            try {
+                const payload = {
+                    exportedAt: new Date().toISOString(),
+                    totalWords: state.vocabulary.length,
+                    totalFavorites: state.favorites.length,
+                    vocabulary: state.vocabulary,
+                    favorites: state.favorites
+                };
+                const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `mandarin-studio-backup-${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                showStatus('Backup JSON downloaded successfully.', 'success');
+            } catch (e) {
+                showStatus('Failed to export backup file.', 'error');
+            }
+        }
+
+        function confirmResetCustomBatches() {
+            const modal = document.getElementById('resetModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            const modal = document.getElementById('resetModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function executeResetCustomBatches() {
+            closeResetModal();
+            stopAutoPlay();
+
+            const customBatchNums = [...new Set(state.vocabulary.filter(item => item.batch > 3).map(item => item.batch))];
+            state.vocabulary = [...INITIAL_VOCABULARY];
+
+            try {
+                localStorage.removeItem(STORAGE_KEY_BATCHES);
+            } catch (e) {}
+
+            if (window.cloudClearCustomBatches && customBatchNums.length > 0) {
+                await window.cloudClearCustomBatches(customBatchNums);
+            }
+
+            if (typeof state.selectedBatch === 'number' && state.selectedBatch > 3) {
+                state.selectedBatch = 'all';
+            }
+            state.flashcardIndex = 0;
+            state.isFlashcardFlipped = false;
+            renderAll();
+            showStatus('Reset complete. Original 30 words restored (Favorites preserved).', 'info');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadPersistedData();
+            populateMandarinVoices();
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = populateMandarinVoices;
+            }
+
+            const voiceSelect = document.getElementById('voiceSelect');
+            if (voiceSelect) {
+                voiceSelect.addEventListener('change', (e) => {
+                    state.selectedVoiceURI = e.target.value;
+                });
+            }
+
+            renderAll();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (state.viewMode !== 'flashcard') return;
+            if (document.activeElement && ['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+            if (e.key === 'ArrowRight') {
+                nextFlashcard();
+            } else if (e.key === 'ArrowLeft') {
+                prevFlashcard();
+            } else if (e.key === ' ') {
+                e.preventDefault();
+                flipFlashcard();
+            }
+        });
+    </script>
+</body>
+</html>
